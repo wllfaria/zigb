@@ -71,15 +71,19 @@ import fs from "fs";
     codeMap.operands.forEach((op, idx, arr) => {
       const mappedName = immediateMap[op.name];
 
+      if (!op.immediate) title += "[";
+
       if (!!mappedName) title += capitalize(mappedName);
       else if (op.name.includes("$")) title += `${op.name.slice(1)}h`;
       else title += op.name;
+
+      if (!op.immediate) title += "]";
 
       const isLast = idx === arr.length - 1;
       if (!isLast) title += ", ";
     });
 
-    zigEnum.push(title);
+    zigEnum.push(title.trimEnd());
     zigEnum.push(`${indentation}/// Bytes: ${codeMap.bytes}`);
     zigEnum.push(`${indentation}/// Cycles: ${codeMap.cycles.join(", ")}`);
 

@@ -17,7 +17,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     LdBCImm16 = 0x01,
-    /// LD BC, A
+    /// LD [BC], A
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
@@ -53,7 +53,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: 0, N: 0, H: 0, C: C
     Rlca = 0x07,
-    /// LD Imm16, SP
+    /// LD [Imm16], SP
     /// Bytes: 3
     /// Cycles: 20
     /// Flags:
@@ -65,7 +65,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: 0, H: H, C: C
     AddHLBC = 0x09,
-    /// LD A, BC
+    /// LD A, [BC]
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
@@ -113,7 +113,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     LdDEImm16 = 0x11,
-    /// LD DE, A
+    /// LD [DE], A
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
@@ -161,7 +161,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: 0, H: H, C: C
     AddHLDE = 0x19,
-    /// LD A, DE
+    /// LD A, [DE]
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
@@ -209,7 +209,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     LdHLImm16 = 0x21,
-    /// LD HL, A
+    /// LD [HL], A
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
@@ -257,7 +257,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: 0, H: H, C: C
     AddHLHL = 0x29,
-    /// LD A, HL
+    /// LD A, [HL]
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
@@ -305,7 +305,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     LdSPImm16 = 0x31,
-    /// LD HL, A
+    /// LD [HL], A
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
@@ -317,19 +317,19 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     IncSP = 0x33,
-    /// INC HL
+    /// INC [HL]
     /// Bytes: 1
     /// Cycles: 12
     /// Flags:
     /// Z: Z, N: 0, H: H, C: -
     IncHLMem = 0x34,
-    /// DEC HL
+    /// DEC [HL]
     /// Bytes: 1
     /// Cycles: 12
     /// Flags:
     /// Z: Z, N: 1, H: H, C: -
     DecHLMem = 0x35,
-    /// LD HL, Imm8
+    /// LD [HL], Imm8
     /// Bytes: 2
     /// Cycles: 12
     /// Flags:
@@ -353,7 +353,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: 0, H: H, C: C
     AddHLSP = 0x39,
-    /// LD A, HL
+    /// LD A, [HL]
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
@@ -425,7 +425,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     LdBL = 0x45,
-    /// LD B, HL
+    /// LD B, [HL]
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
@@ -473,7 +473,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     LdCL = 0x4D,
-    /// LD C, HL
+    /// LD C, [HL]
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
@@ -521,7 +521,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     LdDL = 0x55,
-    /// LD D, HL
+    /// LD D, [HL]
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
@@ -569,7 +569,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     LdEL = 0x5D,
-    /// LD E, HL
+    /// LD E, [HL]
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
@@ -617,7 +617,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     LdHL = 0x65,
-    /// LD H, HL
+    /// LD H, [HL]
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
@@ -665,7 +665,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     LdLL = 0x6D,
-    /// LD L, HL
+    /// LD L, [HL]
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
@@ -677,37 +677,37 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     LdLA = 0x6F,
-    /// LD HL, B
+    /// LD [HL], B
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     LdHLMemB = 0x70,
-    /// LD HL, C
+    /// LD [HL], C
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     LdHLMemC = 0x71,
-    /// LD HL, D
+    /// LD [HL], D
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     LdHLMemD = 0x72,
-    /// LD HL, E
+    /// LD [HL], E
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     LdHLMemE = 0x73,
-    /// LD HL, H
+    /// LD [HL], H
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     LdHLMemH = 0x74,
-    /// LD HL, L
+    /// LD [HL], L
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
@@ -719,7 +719,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     Halt = 0x76,
-    /// LD HL, A
+    /// LD [HL], A
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
@@ -761,7 +761,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     LdAL = 0x7D,
-    /// LD A, HL
+    /// LD A, [HL]
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
@@ -809,7 +809,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: Z, N: 0, H: H, C: C
     AddAL = 0x85,
-    /// ADD A, HL
+    /// ADD A, [HL]
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
@@ -857,7 +857,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: Z, N: 0, H: H, C: C
     AdcAL = 0x8D,
-    /// ADC A, HL
+    /// ADC A, [HL]
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
@@ -905,7 +905,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: Z, N: 1, H: H, C: C
     SubAL = 0x95,
-    /// SUB A, HL
+    /// SUB A, [HL]
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
@@ -953,7 +953,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: Z, N: 1, H: H, C: C
     SbcAL = 0x9D,
-    /// SBC A, HL
+    /// SBC A, [HL]
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
@@ -1001,7 +1001,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: Z, N: 0, H: 1, C: 0
     AndAL = 0xA5,
-    /// AND A, HL
+    /// AND A, [HL]
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
@@ -1049,7 +1049,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: Z, N: 0, H: 0, C: 0
     XorAL = 0xAD,
-    /// XOR A, HL
+    /// XOR A, [HL]
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
@@ -1097,7 +1097,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: Z, N: 0, H: 0, C: 0
     OrAL = 0xB5,
-    /// OR A, HL
+    /// OR A, [HL]
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
@@ -1145,7 +1145,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: Z, N: 1, H: H, C: C
     CpAL = 0xBD,
-    /// CP A, HL
+    /// CP A, [HL]
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
@@ -1331,7 +1331,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     Rst18h = 0xDF,
-    /// LDH Imm8, A
+    /// LDH [Imm8], A
     /// Bytes: 2
     /// Cycles: 12
     /// Flags:
@@ -1343,7 +1343,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     PopHL = 0xE1,
-    /// LDH C, A
+    /// LDH [C], A
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
@@ -1379,7 +1379,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     JpHL = 0xE9,
-    /// LD Imm16, A
+    /// LD [Imm16], A
     /// Bytes: 3
     /// Cycles: 16
     /// Flags:
@@ -1397,7 +1397,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     Rst28h = 0xEF,
-    /// LDH A, Imm8
+    /// LDH A, [Imm8]
     /// Bytes: 2
     /// Cycles: 12
     /// Flags:
@@ -1409,7 +1409,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: Z, N: N, H: H, C: C
     PopAF = 0xF1,
-    /// LDH A, C
+    /// LDH A, [C]
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
@@ -1451,7 +1451,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     LdSPHL = 0xF9,
-    /// LD A, Imm16
+    /// LD A, [Imm16]
     /// Bytes: 3
     /// Cycles: 16
     /// Flags:
@@ -1520,7 +1520,7 @@ pub const CBOpCode = enum(u8) {
     /// Flags:
     /// Z: Z, N: 0, H: 0, C: C
     RlcL = 0x05,
-    /// RLC HL
+    /// RLC [HL]
     /// Bytes: 2
     /// Cycles: 16
     /// Flags:
@@ -1568,7 +1568,7 @@ pub const CBOpCode = enum(u8) {
     /// Flags:
     /// Z: Z, N: 0, H: 0, C: C
     RrcL = 0x0D,
-    /// RRC HL
+    /// RRC [HL]
     /// Bytes: 2
     /// Cycles: 16
     /// Flags:
@@ -1616,7 +1616,7 @@ pub const CBOpCode = enum(u8) {
     /// Flags:
     /// Z: Z, N: 0, H: 0, C: C
     RlL = 0x15,
-    /// RL HL
+    /// RL [HL]
     /// Bytes: 2
     /// Cycles: 16
     /// Flags:
@@ -1664,7 +1664,7 @@ pub const CBOpCode = enum(u8) {
     /// Flags:
     /// Z: Z, N: 0, H: 0, C: C
     RrL = 0x1D,
-    /// RR HL
+    /// RR [HL]
     /// Bytes: 2
     /// Cycles: 16
     /// Flags:
@@ -1712,7 +1712,7 @@ pub const CBOpCode = enum(u8) {
     /// Flags:
     /// Z: Z, N: 0, H: 0, C: C
     SlaL = 0x25,
-    /// SLA HL
+    /// SLA [HL]
     /// Bytes: 2
     /// Cycles: 16
     /// Flags:
@@ -1760,7 +1760,7 @@ pub const CBOpCode = enum(u8) {
     /// Flags:
     /// Z: Z, N: 0, H: 0, C: C
     SraL = 0x2D,
-    /// SRA HL
+    /// SRA [HL]
     /// Bytes: 2
     /// Cycles: 16
     /// Flags:
@@ -1808,7 +1808,7 @@ pub const CBOpCode = enum(u8) {
     /// Flags:
     /// Z: Z, N: 0, H: 0, C: 0
     SwapL = 0x35,
-    /// SWAP HL
+    /// SWAP [HL]
     /// Bytes: 2
     /// Cycles: 16
     /// Flags:
@@ -1856,7 +1856,7 @@ pub const CBOpCode = enum(u8) {
     /// Flags:
     /// Z: Z, N: 0, H: 0, C: C
     SrlL = 0x3D,
-    /// SRL HL
+    /// SRL [HL]
     /// Bytes: 2
     /// Cycles: 16
     /// Flags:
@@ -1904,7 +1904,7 @@ pub const CBOpCode = enum(u8) {
     /// Flags:
     /// Z: Z, N: 0, H: 1, C: -
     Bit0L = 0x45,
-    /// BIT 0, HL
+    /// BIT 0, [HL]
     /// Bytes: 2
     /// Cycles: 12
     /// Flags:
@@ -1952,7 +1952,7 @@ pub const CBOpCode = enum(u8) {
     /// Flags:
     /// Z: Z, N: 0, H: 1, C: -
     Bit1L = 0x4D,
-    /// BIT 1, HL
+    /// BIT 1, [HL]
     /// Bytes: 2
     /// Cycles: 12
     /// Flags:
@@ -2000,7 +2000,7 @@ pub const CBOpCode = enum(u8) {
     /// Flags:
     /// Z: Z, N: 0, H: 1, C: -
     Bit2L = 0x55,
-    /// BIT 2, HL
+    /// BIT 2, [HL]
     /// Bytes: 2
     /// Cycles: 12
     /// Flags:
@@ -2048,7 +2048,7 @@ pub const CBOpCode = enum(u8) {
     /// Flags:
     /// Z: Z, N: 0, H: 1, C: -
     Bit3L = 0x5D,
-    /// BIT 3, HL
+    /// BIT 3, [HL]
     /// Bytes: 2
     /// Cycles: 12
     /// Flags:
@@ -2096,7 +2096,7 @@ pub const CBOpCode = enum(u8) {
     /// Flags:
     /// Z: Z, N: 0, H: 1, C: -
     Bit4L = 0x65,
-    /// BIT 4, HL
+    /// BIT 4, [HL]
     /// Bytes: 2
     /// Cycles: 12
     /// Flags:
@@ -2144,7 +2144,7 @@ pub const CBOpCode = enum(u8) {
     /// Flags:
     /// Z: Z, N: 0, H: 1, C: -
     Bit5L = 0x6D,
-    /// BIT 5, HL
+    /// BIT 5, [HL]
     /// Bytes: 2
     /// Cycles: 12
     /// Flags:
@@ -2192,7 +2192,7 @@ pub const CBOpCode = enum(u8) {
     /// Flags:
     /// Z: Z, N: 0, H: 1, C: -
     Bit6L = 0x75,
-    /// BIT 6, HL
+    /// BIT 6, [HL]
     /// Bytes: 2
     /// Cycles: 12
     /// Flags:
@@ -2240,7 +2240,7 @@ pub const CBOpCode = enum(u8) {
     /// Flags:
     /// Z: Z, N: 0, H: 1, C: -
     Bit7L = 0x7D,
-    /// BIT 7, HL
+    /// BIT 7, [HL]
     /// Bytes: 2
     /// Cycles: 12
     /// Flags:
@@ -2288,7 +2288,7 @@ pub const CBOpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     Res0L = 0x85,
-    /// RES 0, HL
+    /// RES 0, [HL]
     /// Bytes: 2
     /// Cycles: 16
     /// Flags:
@@ -2336,7 +2336,7 @@ pub const CBOpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     Res1L = 0x8D,
-    /// RES 1, HL
+    /// RES 1, [HL]
     /// Bytes: 2
     /// Cycles: 16
     /// Flags:
@@ -2384,7 +2384,7 @@ pub const CBOpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     Res2L = 0x95,
-    /// RES 2, HL
+    /// RES 2, [HL]
     /// Bytes: 2
     /// Cycles: 16
     /// Flags:
@@ -2432,7 +2432,7 @@ pub const CBOpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     Res3L = 0x9D,
-    /// RES 3, HL
+    /// RES 3, [HL]
     /// Bytes: 2
     /// Cycles: 16
     /// Flags:
@@ -2480,7 +2480,7 @@ pub const CBOpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     Res4L = 0xA5,
-    /// RES 4, HL
+    /// RES 4, [HL]
     /// Bytes: 2
     /// Cycles: 16
     /// Flags:
@@ -2528,7 +2528,7 @@ pub const CBOpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     Res5L = 0xAD,
-    /// RES 5, HL
+    /// RES 5, [HL]
     /// Bytes: 2
     /// Cycles: 16
     /// Flags:
@@ -2576,7 +2576,7 @@ pub const CBOpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     Res6L = 0xB5,
-    /// RES 6, HL
+    /// RES 6, [HL]
     /// Bytes: 2
     /// Cycles: 16
     /// Flags:
@@ -2624,7 +2624,7 @@ pub const CBOpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     Res7L = 0xBD,
-    /// RES 7, HL
+    /// RES 7, [HL]
     /// Bytes: 2
     /// Cycles: 16
     /// Flags:
@@ -2672,7 +2672,7 @@ pub const CBOpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     Set0L = 0xC5,
-    /// SET 0, HL
+    /// SET 0, [HL]
     /// Bytes: 2
     /// Cycles: 16
     /// Flags:
@@ -2720,7 +2720,7 @@ pub const CBOpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     Set1L = 0xCD,
-    /// SET 1, HL
+    /// SET 1, [HL]
     /// Bytes: 2
     /// Cycles: 16
     /// Flags:
@@ -2768,7 +2768,7 @@ pub const CBOpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     Set2L = 0xD5,
-    /// SET 2, HL
+    /// SET 2, [HL]
     /// Bytes: 2
     /// Cycles: 16
     /// Flags:
@@ -2816,7 +2816,7 @@ pub const CBOpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     Set3L = 0xDD,
-    /// SET 3, HL
+    /// SET 3, [HL]
     /// Bytes: 2
     /// Cycles: 16
     /// Flags:
@@ -2864,7 +2864,7 @@ pub const CBOpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     Set4L = 0xE5,
-    /// SET 4, HL
+    /// SET 4, [HL]
     /// Bytes: 2
     /// Cycles: 16
     /// Flags:
@@ -2912,7 +2912,7 @@ pub const CBOpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     Set5L = 0xED,
-    /// SET 5, HL
+    /// SET 5, [HL]
     /// Bytes: 2
     /// Cycles: 16
     /// Flags:
@@ -2960,7 +2960,7 @@ pub const CBOpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     Set6L = 0xF5,
-    /// SET 6, HL
+    /// SET 6, [HL]
     /// Bytes: 2
     /// Cycles: 16
     /// Flags:
@@ -3008,7 +3008,7 @@ pub const CBOpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     Set7L = 0xFD,
-    /// SET 7, HL
+    /// SET 7, [HL]
     /// Bytes: 2
     /// Cycles: 16
     /// Flags:

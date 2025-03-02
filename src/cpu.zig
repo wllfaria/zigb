@@ -82,6 +82,36 @@ fn decode(self: *@This(), op_code: OpCodes.OpCode) ?Instructions.Instruction {
             .nibble = .Lower,
         } },
         .LdhCMemA => return Instructions.Instruction.LdhCMemA,
+        .LdHLMemA => return Instructions.Instruction{ .LdR16MemA = .{
+            .dest = .HL,
+        } },
+        .LdhImm8MemA => return Instructions.Instruction{ .LdhImm8MemA = .{
+            .dest = self.fetch(),
+        } },
+        .LdDEImm16 => return Instructions.Instruction{ .LdR16Imm16 = .{
+            .dest = .DE,
+            .source = self.fetchWord(),
+        } },
+        .LdADEMem => return Instructions.Instruction{ .LdAR16Mem = .{
+            .source = .DE,
+        } },
+        .CallImm16 => return Instructions.Instruction{ .CallImm16 = .{
+            .source = self.fetchWord(),
+        } },
+        .LdCA => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .BC,
+            .dest_nibble = .Lower,
+            .source = .AF,
+            .source_nibble = .Upper,
+        } },
+        .LdBImm8 => return Instructions.Instruction{ .LdR8Imm8 = .{
+            .dest = .BC,
+            .source = self.fetch(),
+            .nibble = .Upper,
+        } },
+        .PushBC => return Instructions.Instruction{ .PushR16 = .{
+            .source = .BC,
+        } },
         .CbPrefix => switch (self.fetchCB()) {
             .Bit7H => return Instructions.Instruction{ .BitB3R8 = .{
                 .dest = .HL,
@@ -155,17 +185,51 @@ fn execute(self: *@This(), instruction: Instructions.Instruction) void {
                 .Carry => {},
             }
         },
+        .LdAR16Mem => |inst| {
+            const address = self.registers.get(inst.source);
+            const value = self.memory.read(address);
+            self.registers.setUpper(.AF, value);
+        },
         .LdR8Imm8 => |inst| switch (inst.nibble) {
             .Upper => self.registers.setUpper(inst.dest, inst.source),
             .Lower => self.registers.setLower(inst.dest, inst.source),
         },
         .LdhCMemA => {
             const lower = self.registers.getLower(.BC);
-            self.memory.write(0xFF00 + @as(u16, lower), self.registers.getUpper(.AF));
+            const address = 0xFF00 + @as(u16, lower);
+            self.memory.write(address, self.registers.getUpper(.AF));
+        },
+        .LdhImm8MemA => |inst| {
+            const address = 0xFF00 + @as(u16, inst.dest);
+            self.memory.write(address, self.registers.getUpper(.AF));
+        },
+        .CallImm16 => |inst| {
+            self.memory.stackPush(&self.registers, self.registers.get(.PC));
+            self.registers.set(.PC, inst.source);
         },
         .IncR8 => |inst| switch (inst.nibble) {
-            .Upper => self.registers.setUpper(inst.dest, self.registers.getUpper(inst.dest) + 1),
-            .Lower => self.registers.setLower(inst.dest, self.registers.getLower(inst.dest) + 1),
+            .Upper => {
+                const upper = self.registers.getUpper(inst.dest);
+                self.registers.setUpper(inst.dest, upper + 1);
+            },
+            .Lower => {
+                const lower = self.registers.getLower(inst.dest);
+                self.registers.setLower(inst.dest, lower + 1);
+            },
+        },
+        .LdR8R8 => |inst| {
+            const value = switch (inst.source_nibble) {
+                .Upper => self.registers.getUpper(inst.source),
+                .Lower => self.registers.getLower(inst.source),
+            };
+            switch (inst.dest_nibble) {
+                .Upper => self.registers.setUpper(inst.dest, value),
+                .Lower => self.registers.setLower(inst.dest, value),
+            }
+        },
+        .PushR16 => |inst| {
+            const value = self.registers.get(inst.source);
+            self.memory.stackPush(&self.registers, value);
         },
         else => @panic("TODO"),
     }

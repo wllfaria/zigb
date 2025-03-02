@@ -1,5 +1,7 @@
-const Constants = @import("constants.zig");
 const std = @import("std");
+
+const Constants = @import("constants.zig");
+const Registers = @import("registers.zig");
 
 memory: [0xFFFF]u8,
 
@@ -19,6 +21,18 @@ pub fn readWord(self: *@This(), address: u16) u16 {
 
 pub fn write(self: *@This(), address: u16, value: u8) void {
     self.memory[address] = value;
+}
+
+pub fn writeWord(self: *@This(), address: u16, value: u16) void {
+    const upper: u8 = @truncate(value >> 8);
+    const lower: u8 = @truncate(value);
+    self.write(address, lower);
+    self.write(address + 1, upper);
+}
+
+pub fn stackPush(self: *@This(), registers: *Registers, value: u16) void {
+    registers.decrement(.SP, 2);
+    self.writeWord(registers.get(.SP), value);
 }
 
 pub fn loadBootRoom(self: *@This(), file_path: []const u8, variant: Constants.BootRomVariant) anyerror!void {
