@@ -9,11 +9,13 @@ pub const Instruction = union(enum) {
     Nop,
     /// LD r16, imm16
     LdR16Imm16: struct { dest: Registers.Register, source: u16 },
-    /// LD [r16], a
-    LdR16MemA: struct {
+    /// LD [r16], r8
+    LdR16MemR8: struct {
         dest: Registers.Register,
         increment: bool = false,
         decrement: bool = false,
+        source: Registers.Register,
+        source_nibble: Registers.Nibble,
     },
     /// LD a, [r16]
     LdAR16Mem: struct {
@@ -62,11 +64,11 @@ pub const Instruction = union(enum) {
     /// AND a, r8
     AndAR8: struct { source: Registers.Register },
     /// XOR a, r8
-    XorAR8: struct { source: Registers.Register, flags: Registers.Flags },
+    XorAR8: struct { source: Registers.Register, nibble: Registers.Nibble },
     /// OR a, r8
-    OrAR8: struct { source: Registers.Register },
+    OrAR8: struct { source: Registers.Register, nibble: Registers.Nibble },
     /// CP a, r8
-    CpAR8: struct { source: Registers.Register },
+    CpAR8: struct { source: Registers.Register, nibble: Registers.Nibble },
     /// ADD a, imm8
     AddAImm8: struct { source: u8 },
     /// ADC a, imm8
@@ -154,7 +156,7 @@ pub const Instruction = union(enum) {
         const total_cycles: u16 = switch (self) {
             .Nop => 4,
             .LdR16Imm16 => 12,
-            .LdR16MemA => 8,
+            .LdR16MemR8 => 8,
             .LdAR16Mem => 8,
             .LdImm16MemSP => 20,
             .IncR16 => 8,

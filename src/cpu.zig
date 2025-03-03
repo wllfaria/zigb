@@ -73,46 +73,377 @@ fn fetchCB(self: *@This()) OpCodes.CBOpCode {
 fn decode(self: *@This(), op_code: OpCodes.OpCode) Instructions.Instruction {
     switch (op_code) {
         .Nop => return Instructions.Instruction.Nop,
-        .XorAA => return Instructions.Instruction{ .XorAR8 = .{
-            .source = .AF,
-            .flags = .{ .zero = true },
+        .LdBCImm16 => return Instructions.Instruction{ .LdR16Imm16 = .{
+            .dest = .BC,
+            .source = self.fetchWord(),
         } },
-        .LdSPImm16 => return Instructions.Instruction{ .LdR16Imm16 = .{
-            .dest = .SP,
+        .LdDEImm16 => return Instructions.Instruction{ .LdR16Imm16 = .{
+            .dest = .DE,
             .source = self.fetchWord(),
         } },
         .LdHLImm16 => return Instructions.Instruction{ .LdR16Imm16 = .{
             .dest = .HL,
             .source = self.fetchWord(),
         } },
-        .LdHLMemSubA => return Instructions.Instruction{ .LdR16MemA = .{
+        .LdSPImm16 => return Instructions.Instruction{ .LdR16Imm16 = .{
+            .dest = .SP,
+            .source = self.fetchWord(),
+        } },
+        .LdDEMemA => return Instructions.Instruction{ .LdR16MemR8 = .{
+            .dest = .DE,
+            .source = .AF,
+            .source_nibble = .Upper,
+        } },
+        .LdHLMemA => return Instructions.Instruction{ .LdR16MemR8 = .{
+            .dest = .HL,
+            .source = .AF,
+            .source_nibble = .Upper,
+        } },
+        .LdHLMemSubA => return Instructions.Instruction{ .LdR16MemR8 = .{
             .dest = .HL,
             .decrement = true,
+            .source = .AF,
+            .source_nibble = .Upper,
         } },
-        .JrNZImm8 => return Instructions.Instruction{ .JrCondImm8 = .{
-            .cond = .NotZero,
+        .LdHLMemAddA => return Instructions.Instruction{ .LdR16MemR8 = .{
+            .dest = .HL,
+            .increment = true,
+            .source = .AF,
+            .source_nibble = .Upper,
+        } },
+        .LdHLMemB => return Instructions.Instruction{ .LdR16MemR8 = .{
+            .dest = .HL,
+            .source = .BC,
+            .source_nibble = .Upper,
+        } },
+        .LdHLMemE => return Instructions.Instruction{ .LdR16MemR8 = .{
+            .dest = .HL,
+            .source = .DE,
+            .source_nibble = .Lower,
+        } },
+        .LdAImm8 => return Instructions.Instruction{ .LdR8Imm8 = .{
+            .dest = .AF,
             .source = self.fetch(),
+            .nibble = .Upper,
         } },
-        .JrZImm8 => return Instructions.Instruction{ .JrCondImm8 = .{
-            .cond = .Zero,
-            .source = self.fetch(),
-        } },
-        .LdCImm8 => return Instructions.Instruction{ .LdR8Imm8 = .{
+        .LdBImm8 => return Instructions.Instruction{ .LdR8Imm8 = .{
             .dest = .BC,
             .source = self.fetch(),
             .nibble = .Upper,
         } },
-        .JpImm16 => return Instructions.Instruction{ .JpImm16 = .{
-            .source = self.fetchWord(),
+        .LdCImm8 => return Instructions.Instruction{ .LdR8Imm8 = .{
+            .dest = .BC,
+            .source = self.fetch(),
+            .nibble = .Lower,
+        } },
+        .LdDImm8 => return Instructions.Instruction{ .LdR8Imm8 = .{
+            .dest = .DE,
+            .source = self.fetch(),
+            .nibble = .Upper,
         } },
         .LdEImm8 => return Instructions.Instruction{ .LdR8Imm8 = .{
             .dest = .DE,
             .source = self.fetch(),
             .nibble = .Lower,
         } },
-        .LdAImm8 => return Instructions.Instruction{ .LdR8Imm8 = .{
-            .dest = .AF,
+        .LdHImm8 => return Instructions.Instruction{ .LdR8Imm8 = .{
+            .dest = .HL,
             .source = self.fetch(),
+            .nibble = .Upper,
+        } },
+        .LdLImm8 => return Instructions.Instruction{ .LdR8Imm8 = .{
+            .dest = .HL,
+            .source = self.fetch(),
+            .nibble = .Lower,
+        } },
+        .LdAA => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .AF,
+            .dest_nibble = .Upper,
+            .source = .AF,
+            .source_nibble = .Upper,
+        } },
+        .LdAB => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .AF,
+            .dest_nibble = .Upper,
+            .source = .BC,
+            .source_nibble = .Upper,
+        } },
+        .LdAC => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .AF,
+            .dest_nibble = .Upper,
+            .source = .BC,
+            .source_nibble = .Lower,
+        } },
+        .LdAD => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .AF,
+            .dest_nibble = .Upper,
+            .source = .DE,
+            .source_nibble = .Upper,
+        } },
+        .LdAE => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .AF,
+            .dest_nibble = .Upper,
+            .source = .DE,
+            .source_nibble = .Lower,
+        } },
+        .LdAH => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .AF,
+            .dest_nibble = .Upper,
+            .source = .HL,
+            .source_nibble = .Upper,
+        } },
+        .LdAL => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .AF,
+            .dest_nibble = .Upper,
+            .source = .HL,
+            .source_nibble = .Lower,
+        } },
+        .LdBA => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .BC,
+            .dest_nibble = .Upper,
+            .source = .AF,
+            .source_nibble = .Upper,
+        } },
+        .LdBB => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .BC,
+            .dest_nibble = .Upper,
+            .source = .BC,
+            .source_nibble = .Upper,
+        } },
+        .LdBC => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .BC,
+            .dest_nibble = .Upper,
+            .source = .BC,
+            .source_nibble = .Lower,
+        } },
+        .LdBD => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .BC,
+            .dest_nibble = .Upper,
+            .source = .DE,
+            .source_nibble = .Upper,
+        } },
+        .LdBE => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .BC,
+            .dest_nibble = .Upper,
+            .source = .DE,
+            .source_nibble = .Lower,
+        } },
+        .LdBH => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .BC,
+            .dest_nibble = .Upper,
+            .source = .HL,
+            .source_nibble = .Upper,
+        } },
+        .LdBL => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .BC,
+            .dest_nibble = .Upper,
+            .source = .HL,
+            .source_nibble = .Lower,
+        } },
+        .LdCA => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .BC,
+            .dest_nibble = .Lower,
+            .source = .AF,
+            .source_nibble = .Upper,
+        } },
+        .LdCB => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .BC,
+            .dest_nibble = .Lower,
+            .source = .BC,
+            .source_nibble = .Upper,
+        } },
+        .LdCC => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .BC,
+            .dest_nibble = .Lower,
+            .source = .BC,
+            .source_nibble = .Lower,
+        } },
+        .LdCD => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .BC,
+            .dest_nibble = .Lower,
+            .source = .DE,
+            .source_nibble = .Upper,
+        } },
+        .LdCE => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .BC,
+            .dest_nibble = .Lower,
+            .source = .DE,
+            .source_nibble = .Lower,
+        } },
+        .LdCH => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .BC,
+            .dest_nibble = .Lower,
+            .source = .HL,
+            .source_nibble = .Upper,
+        } },
+        .LdCL => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .BC,
+            .dest_nibble = .Lower,
+            .source = .HL,
+            .source_nibble = .Lower,
+        } },
+        .LdDA => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .DE,
+            .dest_nibble = .Upper,
+            .source = .AF,
+            .source_nibble = .Upper,
+        } },
+        .LdDB => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .DE,
+            .dest_nibble = .Upper,
+            .source = .BC,
+            .source_nibble = .Upper,
+        } },
+        .LdDC => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .DE,
+            .dest_nibble = .Upper,
+            .source = .BC,
+            .source_nibble = .Lower,
+        } },
+        .LdDD => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .DE,
+            .dest_nibble = .Upper,
+            .source = .DE,
+            .source_nibble = .Upper,
+        } },
+        .LdDE => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .DE,
+            .dest_nibble = .Upper,
+            .source = .DE,
+            .source_nibble = .Lower,
+        } },
+        .LdDH => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .DE,
+            .dest_nibble = .Upper,
+            .source = .HL,
+            .source_nibble = .Upper,
+        } },
+        .LdDL => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .DE,
+            .dest_nibble = .Upper,
+            .source = .HL,
+            .source_nibble = .Lower,
+        } },
+        .LdHA => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .HL,
+            .dest_nibble = .Upper,
+            .source = .AF,
+            .source_nibble = .Upper,
+        } },
+        .LdHB => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .HL,
+            .dest_nibble = .Upper,
+            .source = .BC,
+            .source_nibble = .Upper,
+        } },
+        .LdHC => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .HL,
+            .dest_nibble = .Upper,
+            .source = .BC,
+            .source_nibble = .Lower,
+        } },
+        .LdHD => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .HL,
+            .dest_nibble = .Upper,
+            .source = .DE,
+            .source_nibble = .Upper,
+        } },
+        .LdHE => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .HL,
+            .dest_nibble = .Upper,
+            .source = .DE,
+            .source_nibble = .Lower,
+        } },
+        .LdHH => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .HL,
+            .dest_nibble = .Upper,
+            .source = .HL,
+            .source_nibble = .Upper,
+        } },
+        .LdHL => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .HL,
+            .dest_nibble = .Upper,
+            .source = .HL,
+            .source_nibble = .Lower,
+        } },
+        .LdLA => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .HL,
+            .dest_nibble = .Lower,
+            .source = .AF,
+            .source_nibble = .Upper,
+        } },
+        .LdLB => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .HL,
+            .dest_nibble = .Lower,
+            .source = .BC,
+            .source_nibble = .Upper,
+        } },
+        .LdLC => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .HL,
+            .dest_nibble = .Lower,
+            .source = .BC,
+            .source_nibble = .Lower,
+        } },
+        .LdLD => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .HL,
+            .dest_nibble = .Lower,
+            .source = .DE,
+            .source_nibble = .Upper,
+        } },
+        .LdLE => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .HL,
+            .dest_nibble = .Lower,
+            .source = .DE,
+            .source_nibble = .Lower,
+        } },
+        .LdLH => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .HL,
+            .dest_nibble = .Lower,
+            .source = .HL,
+            .source_nibble = .Upper,
+        } },
+        .LdLL => return Instructions.Instruction{ .LdR8R8 = .{
+            .dest = .HL,
+            .dest_nibble = .Lower,
+            .source = .HL,
+            .source_nibble = .Lower,
+        } },
+        .JrNZImm8 => return Instructions.Instruction{ .JrCondImm8 = .{
+            .cond = .NotZero,
+            .source = self.fetch(),
+        } },
+        .JrNCImm8 => return Instructions.Instruction{ .JrCondImm8 = .{
+            .cond = .NoCarry,
+            .source = self.fetch(),
+        } },
+        .JrZImm8 => return Instructions.Instruction{ .JrCondImm8 = .{
+            .cond = .Zero,
+            .source = self.fetch(),
+        } },
+        .XorAA => return Instructions.Instruction{ .XorAR8 = .{
+            .source = .AF,
+            .nibble = .Upper,
+        } },
+        .XorAC => return Instructions.Instruction{ .XorAR8 = .{
+            .source = .BC,
+            .nibble = .Lower,
+        } },
+        .AndAImm8 => return Instructions.Instruction{ .AndAImm8 = .{
+            .source = self.fetch(),
+        } },
+        .LdAImm16Mem => return Instructions.Instruction{ .LdAImm16Mem = .{
+            .source = self.fetchWord(),
+        } },
+        .JpImm16 => return Instructions.Instruction{ .JpImm16 = .{
+            .source = self.fetchWord(),
+        } },
+        .JpNZImm16 => return Instructions.Instruction{ .JpCondImm16 = .{
+            .cond = .NotZero,
+            .source = self.fetchWord(),
+        } },
+        .JpHL => return Instructions.Instruction.JpHL,
+        .IncA => return Instructions.Instruction{ .IncR8 = .{
+            .dest = .AF,
             .nibble = .Upper,
         } },
         .IncB => return Instructions.Instruction{ .IncR8 = .{
@@ -131,25 +462,35 @@ fn decode(self: *@This(), op_code: OpCodes.OpCode) Instructions.Instruction {
             .dest = .DE,
             .nibble = .Lower,
         } },
-        .LdAB => return Instructions.Instruction{ .LdR8R8 = .{
-            .dest = .AF,
-            .dest_nibble = .Upper,
-            .source = .BC,
-            .source_nibble = .Upper,
+        .IncH => return Instructions.Instruction{ .IncR8 = .{
+            .dest = .HL,
+            .nibble = .Upper,
+        } },
+        .IncL => return Instructions.Instruction{ .IncR8 = .{
+            .dest = .HL,
+            .nibble = .Lower,
+        } },
+        .IncBC => return Instructions.Instruction{ .IncR16 = .{
+            .dest = .BC,
+        } },
+        .AddAImm8 => return Instructions.Instruction{ .AddAImm8 = .{
+            .source = self.fetch(),
+        } },
+        .AdcAImm8 => return Instructions.Instruction{ .AdcAImm8 = .{
+            .source = self.fetch(),
+        } },
+        .SubAImm8 => return Instructions.Instruction{ .SubAImm8 = .{
+            .source = self.fetch(),
         } },
         .LdhCMemA => return Instructions.Instruction.LdhCMemA,
         .LdhAImm8Mem => return Instructions.Instruction{ .LdhAImm8Mem = .{
             .source = self.fetch(),
         } },
-        .LdHLMemA => return Instructions.Instruction{ .LdR16MemA = .{
-            .dest = .HL,
-        } },
         .LdhImm8MemA => return Instructions.Instruction{ .LdhImm8MemA = .{
             .dest = self.fetch(),
         } },
-        .LdDEImm16 => return Instructions.Instruction{ .LdR16Imm16 = .{
-            .dest = .DE,
-            .source = self.fetchWord(),
+        .LdABCMem => return Instructions.Instruction{ .LdAR16Mem = .{
+            .source = .BC,
         } },
         .LdADEMem => return Instructions.Instruction{ .LdAR16Mem = .{
             .source = .DE,
@@ -157,53 +498,51 @@ fn decode(self: *@This(), op_code: OpCodes.OpCode) Instructions.Instruction {
         .CallImm16 => return Instructions.Instruction{ .CallImm16 = .{
             .source = self.fetchWord(),
         } },
-        .LdAE => return Instructions.Instruction{ .LdR8R8 = .{
-            .dest = .AF,
-            .dest_nibble = .Upper,
-            .source = .DE,
-            .source_nibble = .Lower,
+        .CallNZImm16 => return Instructions.Instruction{ .CallCondImm16 = .{
+            .cond = .NotZero,
+            .source = self.fetchWord(),
         } },
-        .LdCA => return Instructions.Instruction{ .LdR8R8 = .{
-            .dest = .BC,
-            .dest_nibble = .Lower,
-            .source = .AF,
-            .source_nibble = .Upper,
-        } },
-        .LdBA => return Instructions.Instruction{ .LdR8R8 = .{
-            .dest = .BC,
-            .dest_nibble = .Upper,
-            .source = .AF,
-            .source_nibble = .Upper,
-        } },
-        .LdDEMemA => return Instructions.Instruction{ .LdR16MemA = .{
-            .dest = .DE,
+        .LdAHLMem => return Instructions.Instruction{ .LdAR16Mem = .{
+            .source = .HL,
         } },
         .LdAHLMemAdd => return Instructions.Instruction{ .LdAR16Mem = .{
             .source = .HL,
             .increment = true,
         } },
-        .LdHA => return Instructions.Instruction{ .LdR8R8 = .{
-            .dest = .HL,
-            .dest_nibble = .Upper,
-            .source = .AF,
-            .source_nibble = .Upper,
+        .LdAHLMemSub => return Instructions.Instruction{ .LdAR16Mem = .{
+            .source = .HL,
+            .decrement = true,
         } },
-        .LdDA => return Instructions.Instruction{ .LdR8R8 = .{
-            .dest = .DE,
-            .dest_nibble = .Upper,
-            .source = .AF,
-            .source_nibble = .Upper,
-        } },
-        .LdBImm8 => return Instructions.Instruction{ .LdR8Imm8 = .{
-            .dest = .BC,
+        .JrImm8 => return Instructions.Instruction{ .JrImm8 = .{
             .source = self.fetch(),
-            .nibble = .Upper,
+        } },
+        .PushAF => return Instructions.Instruction{ .PushR16 = .{
+            .source = .AF,
         } },
         .PushBC => return Instructions.Instruction{ .PushR16 = .{
             .source = .BC,
         } },
+        .PushDE => return Instructions.Instruction{ .PushR16 = .{
+            .source = .DE,
+        } },
+        .PushHL => return Instructions.Instruction{ .PushR16 = .{
+            .source = .HL,
+        } },
+        .PopAF => return Instructions.Instruction{ .PopR16 = .{
+            .dest = .AF,
+        } },
         .PopBC => return Instructions.Instruction{ .PopR16 = .{
             .dest = .BC,
+        } },
+        .PopDE => return Instructions.Instruction{ .PopR16 = .{
+            .dest = .DE,
+        } },
+        .PopHL => return Instructions.Instruction{ .PopR16 = .{
+            .dest = .HL,
+        } },
+        .Rra => return Instructions.Instruction{ .RrR8 = .{
+            .dest = .AF,
+            .nibble = .Upper,
         } },
         .Rla => return Instructions.Instruction{ .RlR8 = .{
             .dest = .AF,
@@ -221,6 +560,22 @@ fn decode(self: *@This(), op_code: OpCodes.OpCode) Instructions.Instruction {
             .dest = .BC,
             .nibble = .Lower,
         } },
+        .DecD => return Instructions.Instruction{ .DecR8 = .{
+            .dest = .DE,
+            .nibble = .Upper,
+        } },
+        .DecE => return Instructions.Instruction{ .DecR8 = .{
+            .dest = .DE,
+            .nibble = .Lower,
+        } },
+        .DecH => return Instructions.Instruction{ .DecR8 = .{
+            .dest = .HL,
+            .nibble = .Upper,
+        } },
+        .DecL => return Instructions.Instruction{ .DecR8 = .{
+            .dest = .HL,
+            .nibble = .Lower,
+        } },
         .IncHL => return Instructions.Instruction{ .IncR16 = .{
             .dest = .HL,
         } },
@@ -230,15 +585,79 @@ fn decode(self: *@This(), op_code: OpCodes.OpCode) Instructions.Instruction {
         .CpAImm8 => return Instructions.Instruction{ .CpAImm8 = .{
             .source = self.fetch(),
         } },
-        .LdHLMemAddA => return Instructions.Instruction{ .LdR16MemA = .{
-            .dest = .HL,
-            .increment = true,
+        .CpAA => return Instructions.Instruction{ .CpAR8 = .{
+            .source = .AF,
+            .nibble = .Upper,
+        } },
+        .CpAB => return Instructions.Instruction{ .CpAR8 = .{
+            .source = .BC,
+            .nibble = .Upper,
+        } },
+        .CpAC => return Instructions.Instruction{ .CpAR8 = .{
+            .source = .BC,
+            .nibble = .Lower,
+        } },
+        .CpAD => return Instructions.Instruction{ .CpAR8 = .{
+            .source = .DE,
+            .nibble = .Upper,
+        } },
+        .CpAE => return Instructions.Instruction{ .CpAR8 = .{
+            .source = .DE,
+            .nibble = .Lower,
+        } },
+        .CpAH => return Instructions.Instruction{ .CpAR8 = .{
+            .source = .HL,
+            .nibble = .Upper,
+        } },
+        .CpAL => return Instructions.Instruction{ .CpAR8 = .{
+            .source = .HL,
+            .nibble = .Lower,
         } },
         .Di => return Instructions.Instruction.Di,
         .Ei => return Instructions.Instruction.Ei,
         .Ret => return Instructions.Instruction.Ret,
+        .RetZ => return Instructions.Instruction{ .RetCond = .{
+            .cond = .Zero,
+        } },
+        .RetNZ => return Instructions.Instruction{ .RetCond = .{
+            .cond = .NotZero,
+        } },
+        .RetC => return Instructions.Instruction{ .RetCond = .{
+            .cond = .Carry,
+        } },
+        .RetNC => return Instructions.Instruction{ .RetCond = .{
+            .cond = .NoCarry,
+        } },
         .LdImm16MemA => return Instructions.Instruction{ .LdImm16MemA = .{
             .dest = self.fetchWord(),
+        } },
+        .OrAA => return Instructions.Instruction{ .OrAR8 = .{
+            .source = .AF,
+            .nibble = .Upper,
+        } },
+        .OrAB => return Instructions.Instruction{ .OrAR8 = .{
+            .source = .BC,
+            .nibble = .Upper,
+        } },
+        .OrAC => return Instructions.Instruction{ .OrAR8 = .{
+            .source = .BC,
+            .nibble = .Lower,
+        } },
+        .OrAD => return Instructions.Instruction{ .OrAR8 = .{
+            .source = .DE,
+            .nibble = .Upper,
+        } },
+        .OrAE => return Instructions.Instruction{ .OrAR8 = .{
+            .source = .DE,
+            .nibble = .Lower,
+        } },
+        .OrAH => return Instructions.Instruction{ .OrAR8 = .{
+            .source = .HL,
+            .nibble = .Upper,
+        } },
+        .OrAL => return Instructions.Instruction{ .OrAR8 = .{
+            .source = .HL,
+            .nibble = .Lower,
         } },
         .CbPrefix => switch (self.fetchCB()) {
             .Bit7H => return Instructions.Instruction{ .BitB3R8 = .{
@@ -270,20 +689,26 @@ fn execute(self: *@This(), instruction: Instructions.Instruction) u16 {
             self.registers.set(inst.dest, inst.source);
             return instruction.cycles(false);
         },
-        .XorAR8 => |inst| switch (inst.source) {
-            .AF => {
-                const source = self.registers.getUpper(.AF);
-                const result = self.registers.getUpper(.AF) ^ source;
-                self.registers.setUpper(.AF, result);
-                self.registers.setFlags(inst.flags);
+        .XorAR8 => |inst| {
+            const a = self.registers.getUpper(.AF);
+            const value = switch (inst.nibble) {
+                .Upper => self.registers.getUpper(inst.source),
+                .Lower => self.registers.getLower(inst.source),
+            };
+            const result = a ^ value;
+            self.registers.setUpper(.AF, result);
 
-                return instruction.cycles(false);
-            },
-            else => @panic("TODO"),
+            var new_flags: Registers.Flags = .{};
+            new_flags.zero = result == 0;
+
+            return instruction.cycles(false);
         },
-        .LdR16MemA => |inst| {
+        .LdR16MemR8 => |inst| {
             const address = self.registers.get(inst.dest);
-            const value = self.registers.getUpper(.AF);
+            const value = switch (inst.source_nibble) {
+                .Upper => self.registers.getUpper(inst.source),
+                .Lower => self.registers.getLower(inst.source),
+            };
 
             self.memory.write(address, value);
 
@@ -319,6 +744,43 @@ fn execute(self: *@This(), instruction: Instructions.Instruction) u16 {
 
             return instruction.cycles(false);
         },
+        .AddAImm8 => |inst| {
+            const a = self.registers.getUpper(.AF);
+            const result = a +% inst.source;
+            const carry_bits: u16 = a ^ inst.source ^ result;
+
+            self.registers.setUpper(.AF, result);
+
+            var new_flags: Registers.Flags = .{};
+            new_flags.zero = result == 0;
+            new_flags.carry = (carry_bits & 0x100) != 0;
+            new_flags.half = (carry_bits & 0x10) != 0;
+
+            self.registers.setFlags(new_flags);
+            return instruction.cycles(false);
+        },
+        .SubAImm8 => |inst| {
+            const a = self.registers.getUpper(.AF);
+            const result = a -% inst.source;
+            const borrow = a < inst.source;
+            const half_borrow = (a & 0xF) < (inst.source & 0xF);
+
+            self.registers.setUpper(.AF, result);
+
+            var new_flags: Registers.Flags = .{};
+            new_flags.subtract = true;
+            new_flags.zero = result == 0;
+            new_flags.carry = borrow;
+            new_flags.half = half_borrow;
+
+            self.registers.setFlags(new_flags);
+            return instruction.cycles(false);
+        },
+        .LdAImm16Mem => |inst| {
+            const value = self.memory.read(inst.source);
+            self.registers.setUpper(.AF, value);
+            return instruction.cycles(false);
+        },
         .JrCondImm8 => |inst| {
             const flags = self.registers.getFlags();
             const offset: i8 = @bitCast(inst.source);
@@ -342,6 +804,11 @@ fn execute(self: *@This(), instruction: Instructions.Instruction) u16 {
                 },
             }
 
+            return instruction.cycles(false);
+        },
+        .JrImm8 => |inst| {
+            const offset: i8 = @bitCast(inst.source);
+            self.registers.set(.PC, self.calculateRelativePC(offset));
             return instruction.cycles(false);
         },
         .LdR8Imm8 => |inst| {
@@ -373,9 +840,63 @@ fn execute(self: *@This(), instruction: Instructions.Instruction) u16 {
             self.registers.set(.PC, inst.source);
             return instruction.cycles(false);
         },
+        .CallCondImm16 => |inst| {
+            const flags = self.registers.getFlags();
+
+            switch (inst.cond) {
+                .Zero => if (flags.zero) {
+                    self.memory.pushWord(&self.registers, self.registers.get(.PC));
+                    self.registers.set(.PC, inst.source);
+                    return instruction.cycles(true);
+                },
+                .NotZero => if (!flags.zero) {
+                    self.memory.pushWord(&self.registers, self.registers.get(.PC));
+                    self.registers.set(.PC, inst.source);
+                    return instruction.cycles(true);
+                },
+                .Carry => if (flags.carry) {
+                    self.memory.pushWord(&self.registers, self.registers.get(.PC));
+                    self.registers.set(.PC, inst.source);
+                    return instruction.cycles(true);
+                },
+                .NoCarry => if (!flags.carry) {
+                    self.memory.pushWord(&self.registers, self.registers.get(.PC));
+                    self.registers.set(.PC, inst.source);
+                    return instruction.cycles(true);
+                },
+            }
+
+            return instruction.cycles(false);
+        },
         .Ret => {
             const address = self.memory.popWord(&self.registers);
             self.registers.set(.PC, address);
+            return instruction.cycles(false);
+        },
+        .RetCond => |inst| {
+            const flags = self.registers.getFlags();
+            switch (inst.cond) {
+                .Zero => if (flags.zero) {
+                    const address = self.memory.popWord(&self.registers);
+                    self.registers.set(.PC, address);
+                    return instruction.cycles(true);
+                },
+                .NotZero => if (!flags.zero) {
+                    const address = self.memory.popWord(&self.registers);
+                    self.registers.set(.PC, address);
+                    return instruction.cycles(true);
+                },
+                .Carry => if (flags.carry) {
+                    const address = self.memory.popWord(&self.registers);
+                    self.registers.set(.PC, address);
+                    return instruction.cycles(true);
+                },
+                .NoCarry => if (!flags.carry) {
+                    const address = self.memory.popWord(&self.registers);
+                    self.registers.set(.PC, address);
+                    return instruction.cycles(true);
+                },
+            }
             return instruction.cycles(false);
         },
         .LdR8R8 => |inst| {
@@ -414,18 +935,9 @@ fn execute(self: *@This(), instruction: Instructions.Instruction) u16 {
 
             var new_flags: Registers.Flags = .{};
             new_flags.subtract = true;
-
-            if (flags.carry) {
-                new_flags.carry = true;
-            }
-
-            if (value == 0) {
-                new_flags.zero = true;
-            }
-
-            if ((value & 0x0F) == 0x0F) {
-                new_flags.half = true;
-            }
+            new_flags.carry = flags.carry;
+            new_flags.zero = value == 0;
+            new_flags.half = (value & 0x0F) == 0x0F;
 
             self.registers.setFlags(new_flags);
             return instruction.cycles(false);
@@ -443,18 +955,9 @@ fn execute(self: *@This(), instruction: Instructions.Instruction) u16 {
 
             const flags = self.registers.getFlags();
             var new_flags: Registers.Flags = .{};
-
-            if (flags.carry) {
-                new_flags.carry = true;
-            }
-
-            if (value == 0) {
-                new_flags.zero = true;
-            }
-
-            if ((value & 0x0F) == 0x00) {
-                new_flags.half = true;
-            }
+            new_flags.carry = flags.carry;
+            new_flags.zero = value == 0;
+            new_flags.half = (value & 0x0F) == 0x00;
 
             self.registers.setFlags(new_flags);
             return instruction.cycles(false);
@@ -467,6 +970,33 @@ fn execute(self: *@This(), instruction: Instructions.Instruction) u16 {
             self.registers.set(.PC, inst.source);
             return instruction.cycles(false);
         },
+        .JpCondImm16 => |inst| {
+            const flags = self.registers.getFlags();
+
+            switch (inst.cond) {
+                .NotZero => if (!flags.zero) {
+                    self.registers.set(.PC, inst.source);
+                    return instruction.cycles(true);
+                },
+                .Zero => if (flags.zero) {
+                    self.registers.set(.PC, inst.source);
+                    return instruction.cycles(true);
+                },
+                .NoCarry => if (!flags.carry) {
+                    self.registers.set(.PC, inst.source);
+                    return instruction.cycles(true);
+                },
+                .Carry => if (flags.carry) {
+                    self.registers.set(.PC, inst.source);
+                    return instruction.cycles(true);
+                },
+            }
+            return instruction.cycles(false);
+        },
+        .JpHL => {
+            self.registers.set(.PC, self.registers.get(.HL));
+            return instruction.cycles(false);
+        },
         .RlR8 => |inst| {
             const flags = self.registers.getFlags();
             const carry: u8 = if (flags.carry) 1 else 0;
@@ -477,11 +1007,36 @@ fn execute(self: *@This(), instruction: Instructions.Instruction) u16 {
             };
 
             var new_flags: Registers.Flags = .{};
-            if ((value & 0x80) != 0) {
-                new_flags.carry = true;
-            }
+            new_flags.carry = (value & 0x80) != 0;
 
             value <<= 1;
+            value |= carry;
+
+            if (inst.dest != .AF or inst.nibble != .Upper) {
+                new_flags.zero = (value == 0);
+            }
+
+            switch (inst.nibble) {
+                .Upper => self.registers.setUpper(inst.dest, value),
+                .Lower => self.registers.setLower(inst.dest, value),
+            }
+
+            self.registers.setFlags(new_flags);
+            return instruction.cycles(false);
+        },
+        .RrR8 => |inst| {
+            const flags = self.registers.getFlags();
+            const carry: u8 = if (flags.carry) 0x80 else 0;
+
+            var value = switch (inst.nibble) {
+                .Upper => self.registers.getUpper(inst.dest),
+                .Lower => self.registers.getLower(inst.dest),
+            };
+
+            var new_flags: Registers.Flags = .{};
+            new_flags.carry = (value & 0x01) != 0;
+
+            value >>= 1;
             value |= carry;
 
             if (inst.dest != .AF or inst.nibble != .Upper) {
@@ -508,6 +1063,22 @@ fn execute(self: *@This(), instruction: Instructions.Instruction) u16 {
             self.registers.setFlags(flags);
             return instruction.cycles(false);
         },
+        .CpAR8 => |inst| {
+            const a = self.registers.getUpper(.AF);
+            var flags = self.registers.getFlags();
+            const value = switch (inst.nibble) {
+                .Upper => self.registers.getUpper(inst.source),
+                .Lower => self.registers.getLower(inst.source),
+            };
+
+            flags.subtract = true;
+            flags.carry = (a < value);
+            flags.zero = (value == a);
+            flags.half = (value & 0xF) > (a & 0xF);
+
+            self.registers.setFlags(flags);
+            return instruction.cycles(false);
+        },
         .LdImm16MemA => |inst| {
             self.memory.write(inst.dest, self.registers.getUpper(.AF));
             return instruction.cycles(false);
@@ -518,6 +1089,47 @@ fn execute(self: *@This(), instruction: Instructions.Instruction) u16 {
         },
         .Ei => {
             self.ime = true;
+            return instruction.cycles(false);
+        },
+        .OrAR8 => |inst| {
+            const a = self.registers.getUpper(.AF);
+            const value = switch (inst.nibble) {
+                .Upper => self.registers.getUpper(inst.source),
+                .Lower => self.registers.getLower(inst.source),
+            };
+            const result = a | value;
+            self.registers.setUpper(.AF, result);
+
+            var new_flags: Registers.Flags = .{};
+            new_flags.zero = result == 0;
+
+            return instruction.cycles(false);
+        },
+        .AndAImm8 => |inst| {
+            const a = self.registers.getUpper(.AF);
+            const result = a & inst.source;
+            self.registers.setUpper(.AF, result);
+
+            var new_flags: Registers.Flags = .{};
+            new_flags.half = true;
+            new_flags.zero = result == 0;
+            self.registers.setFlags(new_flags);
+
+            return instruction.cycles(false);
+        },
+        .AdcAImm8 => |inst| {
+            const flags = self.registers.getFlags();
+            const carry: u8 = if (flags.carry) 1 else 0;
+
+            const a = self.registers.getUpper(.AF);
+            const result: u16 = @as(u16, a) + @as(u16, inst.source) + @as(u16, carry);
+
+            var new_flags: Registers.Flags = .{};
+            new_flags.zero = result == 0;
+            new_flags.carry = result > 0xFF;
+            new_flags.half = ((a & 0x0F) + (inst.source & 0x0F) + carry) > 0x0F;
+
+            self.registers.setUpper(.AF, @truncate(result));
             return instruction.cycles(false);
         },
         else => @panic("TODO"),
