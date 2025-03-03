@@ -46,6 +46,15 @@ pub const Register = enum(u3) {
     PC,
 };
 
+pub const InterruptFlags = packed struct {
+    v_blank: bool,
+    lcd: bool,
+    timer: bool,
+    serial: bool,
+    joypad: bool,
+    _pad: u3 = 0,
+};
+
 /// Packed struct to represent flags as a bit field, used by instructions to
 /// specify which flags it should affect
 pub const Flags = packed struct {
@@ -54,7 +63,7 @@ pub const Flags = packed struct {
     _pad: u4 = 0,
     carry: bool = false,
     half: bool = false,
-    negative: bool = false,
+    subtract: bool = false,
     zero: bool = false,
 };
 
@@ -105,6 +114,10 @@ pub fn getFlags(self: *@This()) Flags {
     return @bitCast(self.getLower(.AF) & 0xF0);
 }
 
+pub fn setFlags(self: *@This(), flags: Flags) void {
+    self.setLower(.AF, @bitCast(flags));
+}
+
 pub fn setUpper(self: *@This(), register: Register, value: u8) void {
     const idx = @intFromEnum(register);
     // first clear the upper bits on the register, then shift the u8 as a u16 to
@@ -114,11 +127,27 @@ pub fn setUpper(self: *@This(), register: Register, value: u8) void {
 }
 
 pub fn increment(self: *@This(), register: Register, amount: u16) void {
-    self.set(register, self.get(register) + amount);
+    self.set(register, self.get(register) +% amount);
+}
+
+pub fn incrementLower(self: *@This(), register: Register, amount: u8) void {
+    self.setLower(register, self.getLower(register) +% amount);
+}
+
+pub fn incrementUpper(self: *@This(), register: Register, amount: u8) void {
+    self.setUpper(register, self.getUpper(register) +% amount);
 }
 
 pub fn decrement(self: *@This(), register: Register, amount: u16) void {
-    self.set(register, self.get(register) - amount);
+    self.set(register, self.get(register) -% amount);
+}
+
+pub fn decrementLower(self: *@This(), register: Register, amount: u8) void {
+    self.setLower(register, self.getLower(register) -% amount);
+}
+
+pub fn decrementUpper(self: *@This(), register: Register, amount: u8) void {
+    self.setUpper(register, self.getUpper(register) -% amount);
 }
 
 test "should set lower bits correctly" {

@@ -77,6 +77,9 @@ import fs from "fs";
       else if (op.name.includes("$")) title += `${op.name.slice(1)}h`;
       else title += op.name;
 
+      if (op.increment) title += "+";
+      if (op.decrement) title += "-";
+
       if (!op.immediate) title += "]";
 
       const isLast = idx === arr.length - 1;

@@ -209,7 +209,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     LdHLImm16 = 0x21,
-    /// LD [HL], A
+    /// LD [HL+], A
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
@@ -257,7 +257,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: 0, H: H, C: C
     AddHLHL = 0x29,
-    /// LD A, [HL]
+    /// LD A, [HL+]
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
@@ -305,7 +305,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     LdSPImm16 = 0x31,
-    /// LD [HL], A
+    /// LD [HL-], A
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
@@ -353,7 +353,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: 0, H: H, C: C
     AddHLSP = 0x39,
-    /// LD A, [HL]
+    /// LD A, [HL-]
     /// Bytes: 1
     /// Cycles: 8
     /// Flags:
@@ -1439,7 +1439,7 @@ pub const OpCode = enum(u8) {
     /// Flags:
     /// Z: -, N: -, H: -, C: -
     Rst30h = 0xF7,
-    /// LD HL, SP, Imm8
+    /// LD HL, SP+, Imm8
     /// Bytes: 2
     /// Cycles: 12
     /// Flags:
