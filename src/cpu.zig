@@ -32,6 +32,7 @@ registers: Registers,
 memory: Memory,
 /// Interrupts Master Enable flag
 ime: bool = false,
+ime_delay: bool = false,
 /// Tracks clock cycles for the DIV register
 div_clocksum: u16 = 0,
 /// Tracks clock cycles for the TIMA (Timer Counter) register
@@ -45,9 +46,21 @@ pub fn init() @This() {
 }
 
 pub fn step(self: *@This()) u16 {
+    const pc = self.registers.get(.PC);
     const op_code: OpCodes.OpCode = @enumFromInt(self.fetch());
     const instruction = self.decode(op_code);
-    return self.execute(instruction);
+
+    std.debug.print("0x{X:04}: ", .{pc});
+    instruction.prettyPrint();
+
+    const cycles = self.execute(instruction);
+
+    if (self.ime_delay) {
+        self.ime_delay = false;
+        self.ime = true;
+    }
+
+    return cycles;
 }
 
 fn fetch(self: *@This()) u8 {
@@ -69,7 +82,6 @@ fn fetchCB(self: *@This()) OpCodes.CBOpCode {
     return @enumFromInt(op_code);
 }
 
-/// TODO(wiru): I don't think returning optional here is necessary..
 fn decode(self: *@This(), op_code: OpCodes.OpCode) Instructions.Instruction {
     switch (op_code) {
         .Nop => return Instructions.Instruction.Nop,
@@ -424,6 +436,10 @@ fn decode(self: *@This(), op_code: OpCodes.OpCode) Instructions.Instruction {
             .source = .AF,
             .nibble = .Upper,
         } },
+        .XorAB => return Instructions.Instruction{ .XorAR8 = .{
+            .source = .BC,
+            .nibble = .Upper,
+        } },
         .XorAC => return Instructions.Instruction{ .XorAR8 = .{
             .source = .BC,
             .nibble = .Lower,
@@ -473,6 +489,15 @@ fn decode(self: *@This(), op_code: OpCodes.OpCode) Instructions.Instruction {
         .IncBC => return Instructions.Instruction{ .IncR16 = .{
             .dest = .BC,
         } },
+        .IncDE => return Instructions.Instruction{ .IncR16 = .{
+            .dest = .DE,
+        } },
+        .IncHL => return Instructions.Instruction{ .IncR16 = .{
+            .dest = .HL,
+        } },
+        .IncSP => return Instructions.Instruction{ .IncR16 = .{
+            .dest = .SP,
+        } },
         .AddAImm8 => return Instructions.Instruction{ .AddAImm8 = .{
             .source = self.fetch(),
         } },
@@ -501,6 +526,9 @@ fn decode(self: *@This(), op_code: OpCodes.OpCode) Instructions.Instruction {
         .CallNZImm16 => return Instructions.Instruction{ .CallCondImm16 = .{
             .cond = .NotZero,
             .source = self.fetchWord(),
+        } },
+        .LdImm16MemA => return Instructions.Instruction{ .LdImm16MemA = .{
+            .dest = self.fetchWord(),
         } },
         .LdAHLMem => return Instructions.Instruction{ .LdAR16Mem = .{
             .source = .HL,
@@ -576,12 +604,6 @@ fn decode(self: *@This(), op_code: OpCodes.OpCode) Instructions.Instruction {
             .dest = .HL,
             .nibble = .Lower,
         } },
-        .IncHL => return Instructions.Instruction{ .IncR16 = .{
-            .dest = .HL,
-        } },
-        .IncDE => return Instructions.Instruction{ .IncR16 = .{
-            .dest = .DE,
-        } },
         .CpAImm8 => return Instructions.Instruction{ .CpAImm8 = .{
             .source = self.fetch(),
         } },
@@ -628,9 +650,6 @@ fn decode(self: *@This(), op_code: OpCodes.OpCode) Instructions.Instruction {
         .RetNC => return Instructions.Instruction{ .RetCond = .{
             .cond = .NoCarry,
         } },
-        .LdImm16MemA => return Instructions.Instruction{ .LdImm16MemA = .{
-            .dest = self.fetchWord(),
-        } },
         .OrAA => return Instructions.Instruction{ .OrAR8 = .{
             .source = .AF,
             .nibble = .Upper,
@@ -659,10 +678,24 @@ fn decode(self: *@This(), op_code: OpCodes.OpCode) Instructions.Instruction {
             .source = .HL,
             .nibble = .Lower,
         } },
+        .OrAHLMem => return Instructions.Instruction{ .OrAR16Mem = .{
+            .source = .HL,
+        } },
         .CbPrefix => switch (self.fetchCB()) {
+            .Bit4B => return Instructions.Instruction{ .BitB3R8 = .{
+                .dest = .BC,
+                .source = 4,
+                .nibble = .Upper,
+            } },
+            .Bit7B => return Instructions.Instruction{ .BitB3R8 = .{
+                .dest = .BC,
+                .source = 7,
+                .nibble = .Upper,
+            } },
             .Bit7H => return Instructions.Instruction{ .BitB3R8 = .{
                 .dest = .HL,
                 .source = 7,
+                .nibble = .Upper,
             } },
             .RlC => return Instructions.Instruction{ .RlR8 = .{
                 .dest = .BC,
@@ -684,23 +717,9 @@ fn decode(self: *@This(), op_code: OpCodes.OpCode) Instructions.Instruction {
 
 fn execute(self: *@This(), instruction: Instructions.Instruction) u16 {
     switch (instruction) {
-        .Nop => return 4,
+        .Nop => return instruction.cycles(false),
         .LdR16Imm16 => |inst| {
             self.registers.set(inst.dest, inst.source);
-            return instruction.cycles(false);
-        },
-        .XorAR8 => |inst| {
-            const a = self.registers.getUpper(.AF);
-            const value = switch (inst.nibble) {
-                .Upper => self.registers.getUpper(inst.source),
-                .Lower => self.registers.getLower(inst.source),
-            };
-            const result = a ^ value;
-            self.registers.setUpper(.AF, result);
-
-            var new_flags: Registers.Flags = .{};
-            new_flags.zero = result == 0;
-
             return instruction.cycles(false);
         },
         .LdR16MemR8 => |inst| {
@@ -717,6 +736,13 @@ fn execute(self: *@This(), instruction: Instructions.Instruction) u16 {
 
             return instruction.cycles(false);
         },
+        .LdR8Imm8 => |inst| {
+            switch (inst.nibble) {
+                .Upper => self.registers.setUpper(inst.dest, inst.source),
+                .Lower => self.registers.setLower(inst.dest, inst.source),
+            }
+            return instruction.cycles(false);
+        },
         .LdAR16Mem => |inst| {
             const address = self.registers.get(inst.source);
             const value = self.memory.read(address);
@@ -725,6 +751,58 @@ fn execute(self: *@This(), instruction: Instructions.Instruction) u16 {
             if (inst.increment) self.registers.increment(inst.source, 1);
             if (inst.decrement) self.registers.decrement(inst.source, 1);
 
+            return instruction.cycles(false);
+        },
+        .LdAImm16Mem => |inst| {
+            const value = self.memory.read(inst.source);
+            self.registers.setUpper(.AF, value);
+            return instruction.cycles(false);
+        },
+        .LdhCMemA => {
+            const lower = self.registers.getLower(.BC);
+            const address = 0xFF00 + @as(u16, lower);
+            self.memory.write(address, self.registers.getUpper(.AF));
+            return instruction.cycles(false);
+        },
+        .LdhImm8MemA => |inst| {
+            const address = 0xFF00 + @as(u16, inst.dest);
+            self.memory.write(address, self.registers.getUpper(.AF));
+            return instruction.cycles(false);
+        },
+        .LdhAImm8Mem => |inst| {
+            const address = 0xFF00 + @as(u16, inst.source);
+            const value = self.memory.read(address);
+            self.registers.setUpper(.AF, value);
+            return instruction.cycles(false);
+        },
+        .LdR8R8 => |inst| {
+            const value = switch (inst.source_nibble) {
+                .Upper => self.registers.getUpper(inst.source),
+                .Lower => self.registers.getLower(inst.source),
+            };
+            switch (inst.dest_nibble) {
+                .Upper => self.registers.setUpper(inst.dest, value),
+                .Lower => self.registers.setLower(inst.dest, value),
+            }
+            return instruction.cycles(false);
+        },
+        .LdImm16MemA => |inst| {
+            self.memory.write(inst.dest, self.registers.getUpper(.AF));
+            return instruction.cycles(false);
+        },
+        .XorAR8 => |inst| {
+            const a = self.registers.getUpper(.AF);
+            const value = switch (inst.nibble) {
+                .Upper => self.registers.getUpper(inst.source),
+                .Lower => self.registers.getLower(inst.source),
+            };
+            const result = a ^ value;
+            self.registers.setUpper(.AF, result);
+
+            var new_flags: Registers.Flags = .{};
+            new_flags.zero = result == 0;
+
+            self.registers.setFlags(new_flags);
             return instruction.cycles(false);
         },
         .BitB3R8 => |inst| {
@@ -738,7 +816,7 @@ fn execute(self: *@This(), instruction: Instructions.Instruction) u16 {
             }
 
             flags.subtract = false;
-            flags.half = false;
+            flags.half = true;
 
             self.registers.setFlags(flags);
 
@@ -746,15 +824,18 @@ fn execute(self: *@This(), instruction: Instructions.Instruction) u16 {
         },
         .AddAImm8 => |inst| {
             const a = self.registers.getUpper(.AF);
-            const result = a +% inst.source;
-            const carry_bits: u16 = a ^ inst.source ^ result;
+            const result: u16 = @as(u16, a) + @as(u16, inst.source);
 
-            self.registers.setUpper(.AF, result);
+            const carry = result > 0xFF;
+            const half = ((a & 0xF) + (inst.source & 0xF)) > 0xF;
+
+            self.registers.setUpper(.AF, @truncate(result));
 
             var new_flags: Registers.Flags = .{};
-            new_flags.zero = result == 0;
-            new_flags.carry = (carry_bits & 0x100) != 0;
-            new_flags.half = (carry_bits & 0x10) != 0;
+            const truncated: u8 = @truncate(result);
+            new_flags.zero = truncated == 0;
+            new_flags.carry = carry;
+            new_flags.half = half;
 
             self.registers.setFlags(new_flags);
             return instruction.cycles(false);
@@ -774,11 +855,6 @@ fn execute(self: *@This(), instruction: Instructions.Instruction) u16 {
             new_flags.half = half_borrow;
 
             self.registers.setFlags(new_flags);
-            return instruction.cycles(false);
-        },
-        .LdAImm16Mem => |inst| {
-            const value = self.memory.read(inst.source);
-            self.registers.setUpper(.AF, value);
             return instruction.cycles(false);
         },
         .JrCondImm8 => |inst| {
@@ -809,30 +885,6 @@ fn execute(self: *@This(), instruction: Instructions.Instruction) u16 {
         .JrImm8 => |inst| {
             const offset: i8 = @bitCast(inst.source);
             self.registers.set(.PC, self.calculateRelativePC(offset));
-            return instruction.cycles(false);
-        },
-        .LdR8Imm8 => |inst| {
-            switch (inst.nibble) {
-                .Upper => self.registers.setUpper(inst.dest, inst.source),
-                .Lower => self.registers.setLower(inst.dest, inst.source),
-            }
-            return instruction.cycles(false);
-        },
-        .LdhCMemA => {
-            const lower = self.registers.getLower(.BC);
-            const address = 0xFF00 + @as(u16, lower);
-            self.memory.write(address, self.registers.getUpper(.AF));
-            return instruction.cycles(false);
-        },
-        .LdhImm8MemA => |inst| {
-            const address = 0xFF00 + @as(u16, inst.dest);
-            self.memory.write(address, self.registers.getUpper(.AF));
-            return instruction.cycles(false);
-        },
-        .LdhAImm8Mem => |inst| {
-            const address = 0xFF00 + @as(u16, inst.source);
-            const value = self.memory.read(address);
-            self.registers.setUpper(.AF, value);
             return instruction.cycles(false);
         },
         .CallImm16 => |inst| {
@@ -899,17 +951,6 @@ fn execute(self: *@This(), instruction: Instructions.Instruction) u16 {
             }
             return instruction.cycles(false);
         },
-        .LdR8R8 => |inst| {
-            const value = switch (inst.source_nibble) {
-                .Upper => self.registers.getUpper(inst.source),
-                .Lower => self.registers.getLower(inst.source),
-            };
-            switch (inst.dest_nibble) {
-                .Upper => self.registers.setUpper(inst.dest, value),
-                .Lower => self.registers.setLower(inst.dest, value),
-            }
-            return instruction.cycles(false);
-        },
         .PushR16 => |inst| {
             const value = self.registers.get(inst.source);
             self.memory.pushWord(&self.registers, value);
@@ -921,43 +962,44 @@ fn execute(self: *@This(), instruction: Instructions.Instruction) u16 {
             return instruction.cycles(false);
         },
         .DecR8 => |inst| {
-            switch (inst.nibble) {
-                .Upper => self.registers.decrementUpper(inst.dest, 1),
-                .Lower => self.registers.decrementLower(inst.dest, 1),
-            }
-
             const value = switch (inst.nibble) {
                 .Upper => self.registers.getUpper(inst.dest),
                 .Lower => self.registers.getLower(inst.dest),
             };
+            const result = value -% 1;
+
+            switch (inst.nibble) {
+                .Upper => self.registers.setUpper(inst.dest, result),
+                .Lower => self.registers.setLower(inst.dest, result),
+            }
 
             const flags = self.registers.getFlags();
-
             var new_flags: Registers.Flags = .{};
             new_flags.subtract = true;
             new_flags.carry = flags.carry;
-            new_flags.zero = value == 0;
-            new_flags.half = (value & 0x0F) == 0x0F;
+            new_flags.zero = result == 0;
+            new_flags.half = (value & 0x0F) == 0x00;
 
             self.registers.setFlags(new_flags);
             return instruction.cycles(false);
         },
         .IncR8 => |inst| {
-            switch (inst.nibble) {
-                .Upper => self.registers.incrementUpper(inst.dest, 1),
-                .Lower => self.registers.incrementLower(inst.dest, 1),
-            }
-
             const value = switch (inst.nibble) {
                 .Upper => self.registers.getUpper(inst.dest),
                 .Lower => self.registers.getLower(inst.dest),
             };
+            const result = value +% 1;
+
+            switch (inst.nibble) {
+                .Upper => self.registers.setUpper(inst.dest, result),
+                .Lower => self.registers.setLower(inst.dest, result),
+            }
 
             const flags = self.registers.getFlags();
             var new_flags: Registers.Flags = .{};
             new_flags.carry = flags.carry;
-            new_flags.zero = value == 0;
-            new_flags.half = (value & 0x0F) == 0x00;
+            new_flags.zero = (result == 0);
+            new_flags.half = (value & 0x0F) == 0x0F;
 
             self.registers.setFlags(new_flags);
             return instruction.cycles(false);
@@ -1013,6 +1055,7 @@ fn execute(self: *@This(), instruction: Instructions.Instruction) u16 {
             value |= carry;
 
             if (inst.dest != .AF or inst.nibble != .Upper) {
+                // zero flag is not affected when rotating the upper nibble of AF
                 new_flags.zero = (value == 0);
             }
 
@@ -1058,7 +1101,7 @@ fn execute(self: *@This(), instruction: Instructions.Instruction) u16 {
             flags.subtract = true;
             flags.carry = (a < inst.source);
             flags.zero = (inst.source == a);
-            flags.half = (inst.source & 0xF) > (a & 0xF);
+            flags.half = ((a & 0xF) < (inst.source & 0xF));
 
             self.registers.setFlags(flags);
             return instruction.cycles(false);
@@ -1074,21 +1117,18 @@ fn execute(self: *@This(), instruction: Instructions.Instruction) u16 {
             flags.subtract = true;
             flags.carry = (a < value);
             flags.zero = (value == a);
-            flags.half = (value & 0xF) > (a & 0xF);
+            flags.half = (a & 0xF) < (value & 0xF);
 
             self.registers.setFlags(flags);
             return instruction.cycles(false);
         },
-        .LdImm16MemA => |inst| {
-            self.memory.write(inst.dest, self.registers.getUpper(.AF));
-            return instruction.cycles(false);
-        },
         .Di => {
             self.ime = false;
+            self.ime_delay = false;
             return instruction.cycles(false);
         },
         .Ei => {
-            self.ime = true;
+            self.ime_delay = true;
             return instruction.cycles(false);
         },
         .OrAR8 => |inst| {
@@ -1097,6 +1137,20 @@ fn execute(self: *@This(), instruction: Instructions.Instruction) u16 {
                 .Upper => self.registers.getUpper(inst.source),
                 .Lower => self.registers.getLower(inst.source),
             };
+            const result = a | value;
+            self.registers.setUpper(.AF, result);
+
+            var new_flags: Registers.Flags = .{};
+            new_flags.zero = result == 0;
+
+            return instruction.cycles(false);
+        },
+        .OrAR16Mem => |inst| {
+            const address = self.registers.get(inst.source);
+
+            const value = self.memory.read(address);
+            const a = self.registers.getUpper(.AF);
+
             const result = a | value;
             self.registers.setUpper(.AF, result);
 
@@ -1125,7 +1179,7 @@ fn execute(self: *@This(), instruction: Instructions.Instruction) u16 {
             const result: u16 = @as(u16, a) + @as(u16, inst.source) + @as(u16, carry);
 
             var new_flags: Registers.Flags = .{};
-            new_flags.zero = result == 0;
+            new_flags.zero = (result & 0xFF) == 0;
             new_flags.carry = result > 0xFF;
             new_flags.half = ((a & 0x0F) + (inst.source & 0x0F) + carry) > 0x0F;
 
@@ -1242,7 +1296,7 @@ fn calculateRelativePC(self: *@This(), offset: i8) u16 {
     const pc = self.registers.get(.PC);
     const signed_pc: i32 = @intCast(pc);
     const signed_offset: i32 = @intCast(offset);
-    const new_pc: u16 = @intCast(signed_pc + signed_offset);
+    const new_pc: u16 = @intCast(signed_pc +% signed_offset);
     return new_pc;
 }
 

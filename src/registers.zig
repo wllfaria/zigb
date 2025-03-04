@@ -157,7 +157,11 @@ test "should set lower bits correctly" {
     r.set(.BC, 0xABCD);
 
     const initial = r.get(.BC);
+    const initial_upper = r.getUpper(.BC);
+    const initial_lower = r.getLower(.BC);
     try testing.expectEqual(initial, 0xABCD);
+    try testing.expectEqual(initial_upper, 0xAB);
+    try testing.expectEqual(initial_lower, 0xCD);
 
     r.setLower(.BC, 0xFF);
     const full = r.get(.BC);

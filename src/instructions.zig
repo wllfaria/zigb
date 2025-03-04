@@ -23,6 +23,7 @@ pub const Instruction = union(enum) {
         increment: bool = false,
         decrement: bool = false,
     },
+    OrAR16Mem: struct { source: Registers.Register },
     /// LD [r16], SP
     LdImm16MemSP: struct { dest: u16 },
     /// INC r16
@@ -54,15 +55,15 @@ pub const Instruction = union(enum) {
     },
     Halt,
     /// ADD a, r8
-    AddAR8: struct { source: Registers.Register },
+    AddAR8: struct { source: Registers.Register, nibble: Registers.Nibble },
     /// ADC a, r8
-    AdcAR8: struct { source: Registers.Register },
+    AdcAR8: struct { source: Registers.Register, nibble: Registers.Nibble },
     /// SUB a, r8
-    SubAR8: struct { source: Registers.Register },
+    SubAR8: struct { source: Registers.Register, nibble: Registers.Nibble },
     /// SBC a, r8
-    SbcAR8: struct { source: Registers.Register },
+    SbcAR8: struct { source: Registers.Register, nibble: Registers.Nibble },
     /// AND a, r8
-    AndAR8: struct { source: Registers.Register },
+    AndAR8: struct { source: Registers.Register, nibble: Registers.Nibble },
     /// XOR a, r8
     XorAR8: struct { source: Registers.Register, nibble: Registers.Nibble },
     /// OR a, r8
@@ -146,11 +147,11 @@ pub const Instruction = union(enum) {
     /// SRL r8
     SrlR8: struct { dest: Registers.Register, nibble: Registers.Nibble },
     /// BIT b3, r8
-    BitB3R8: struct { dest: Registers.Register, source: u3 },
+    BitB3R8: struct { dest: Registers.Register, source: u3, nibble: Registers.Nibble },
     /// RES b3, r8
-    ResB3R8: struct { dest: Registers.Register, source: u3 },
+    ResB3R8: struct { dest: Registers.Register, source: u3, nibble: Registers.Nibble },
     /// SET b3, r8
-    SetB3R8: struct { dest: Registers.Register, source: u3 },
+    SetB3R8: struct { dest: Registers.Register, source: u3, nibble: Registers.Nibble },
 
     pub fn cycles(self: Instruction, condition_status: bool) u16 {
         const total_cycles: u16 = switch (self) {
@@ -184,6 +185,7 @@ pub const Instruction = union(enum) {
             .AndAImm8 => 8,
             .XorAImm8 => 8,
             .OrAImm8 => 8,
+            .OrAR16Mem => 8,
             .CpAImm8 => 8,
             .RetCond => if (condition_status) 20 else 8,
             .Ret => 16,
@@ -219,5 +221,86 @@ pub const Instruction = union(enum) {
             .SetB3R8 => 8,
         };
         return total_cycles;
+    }
+
+    pub fn prettyPrint(self: Instruction) void {
+        switch (self) {
+            .Nop => std.debug.print("NOP\n", .{}),
+            .LdAR16Mem => |inst| if (inst.increment) {
+                std.debug.print("LD A, [HL+]\n", .{});
+            } else if (inst.decrement) {
+                std.debug.print("LD A, [HL-]\n", .{});
+            } else {
+                std.debug.print("LD A, [HL]\n", .{});
+            },
+            .LdImm16MemSP => |inst| std.debug.print("LD [0x{X:04}], SP\n", .{inst.dest}),
+            .IncR16 => |inst| std.debug.print("INC {s}\n", .{@tagName(inst.dest)}),
+            .DecR16 => |inst| std.debug.print("DEC {s}\n", .{@tagName(inst.dest)}),
+            .IncR8 => |inst| std.debug.print("INC {s} {s}\n", .{ @tagName(inst.dest), @tagName(inst.nibble) }),
+            .DecR8 => |inst| std.debug.print("DEC {s} {s}\n", .{ @tagName(inst.dest), @tagName(inst.nibble) }),
+            .LdR8Imm8 => |inst| std.debug.print("LD {s} {s}, 0x{X:02}\n", .{ @tagName(inst.dest), @tagName(inst.nibble), inst.source }),
+            .LdR16Imm16 => |inst| std.debug.print("LD {s}, 0x{X:04}\n", .{ @tagName(inst.dest), inst.source }),
+            .LdR16MemR8 => |inst| if (inst.increment) {
+                std.debug.print("LD [{s}+], {s} {s}\n", .{ @tagName(inst.dest), @tagName(inst.source), @tagName(inst.source_nibble) });
+            } else if (inst.decrement) {
+                std.debug.print("LD [{s}-], {s} {s}\n", .{ @tagName(inst.dest), @tagName(inst.source), @tagName(inst.source_nibble) });
+            } else {
+                std.debug.print("LD [{s}], {s} {s}\n", .{ @tagName(inst.dest), @tagName(inst.source), @tagName(inst.source_nibble) });
+            },
+            .AddHLR16 => |inst| std.debug.print("ADD HL, {s}\n", .{@tagName(inst.dest)}),
+            .JrImm8 => |inst| std.debug.print("JR 0x{X:02}\n", .{inst.source}),
+            .JrCondImm8 => |inst| std.debug.print("JR {s}, 0x{X:02}\n", .{ @tagName(inst.cond), inst.source }),
+            .LdR8R8 => |inst| std.debug.print("LD {s} {s}, {s} {s}\n", .{ @tagName(inst.dest), @tagName(inst.dest_nibble), @tagName(inst.source), @tagName(inst.source_nibble) }),
+            .Halt => std.debug.print("HALT\n", .{}),
+            .AddAR8 => |inst| std.debug.print("ADD A, {s} {s}\n", .{ @tagName(inst.source), @tagName(inst.nibble) }),
+            .AdcAR8 => |inst| std.debug.print("ADC A, {s} {s}\n", .{ @tagName(inst.source), @tagName(inst.nibble) }),
+            .SubAR8 => |inst| std.debug.print("SUB A, {s} {s}\n", .{ @tagName(inst.source), @tagName(inst.nibble) }),
+            .SbcAR8 => |inst| std.debug.print("SBC A, {s} {s}\n", .{ @tagName(inst.source), @tagName(inst.nibble) }),
+            .AndAR8 => |inst| std.debug.print("AND A, {s} {s}\n", .{ @tagName(inst.source), @tagName(inst.nibble) }),
+            .XorAR8 => |inst| std.debug.print("XOR A, {s} {s}\n", .{ @tagName(inst.source), @tagName(inst.nibble) }),
+            .OrAR8 => |inst| std.debug.print("OR A, {s} {s}\n", .{ @tagName(inst.source), @tagName(inst.nibble) }),
+            .CpAR8 => |inst| std.debug.print("CP A, {s} {s}\n", .{ @tagName(inst.source), @tagName(inst.nibble) }),
+            .AddAImm8 => |inst| std.debug.print("ADD A, 0x{X:02}\n", .{inst.source}),
+            .AdcAImm8 => |inst| std.debug.print("ADC A, 0x{X:02}\n", .{inst.source}),
+            .SubAImm8 => |inst| std.debug.print("SUB A, 0x{X:02}\n", .{inst.source}),
+            .SbcAImm8 => |inst| std.debug.print("SBC A, 0x{X:02}\n", .{inst.source}),
+            .AndAImm8 => |inst| std.debug.print("AND A, 0x{X:02}\n", .{inst.source}),
+            .XorAImm8 => |inst| std.debug.print("XOR A, 0x{X:02}\n", .{inst.source}),
+            .OrAImm8 => |inst| std.debug.print("OR A, 0x{X:02}\n", .{inst.source}),
+            .OrAR16Mem => |inst| std.debug.print("OR A, [{s}]", .{@tagName(inst.source)}),
+            .CpAImm8 => |inst| std.debug.print("CP A, 0x{X:02}\n", .{inst.source}),
+            .RetCond => |inst| std.debug.print("RET {s}\n", .{@tagName(inst.cond)}),
+            .Ret => std.debug.print("RET\n", .{}),
+            .Reti => std.debug.print("RETI\n", .{}),
+            .JpCondImm16 => |inst| std.debug.print("JP {s}, 0x{X:04}\n", .{ @tagName(inst.cond), inst.source }),
+            .JpImm16 => |inst| std.debug.print("JP 0x{X:04}\n", .{inst.source}),
+            .JpHL => std.debug.print("JP HL\n", .{}),
+            .CallCondImm16 => |inst| std.debug.print("CALL {s}, 0x{X:04}\n", .{ @tagName(inst.cond), inst.source }),
+            .CallImm16 => |inst| std.debug.print("CALL 0x{X:04}\n", .{inst.source}),
+            .PopR16 => |inst| std.debug.print("POP {s}\n", .{@tagName(inst.dest)}),
+            .PushR16 => |inst| std.debug.print("PUSH {s}\n", .{@tagName(inst.source)}),
+            .LdhCMemA => std.debug.print("LDH [C], A\n", .{}),
+            .LdhImm8MemA => |inst| std.debug.print("LDH [0x{X:02}], A\n", .{inst.dest}),
+            .LdImm16MemA => |inst| std.debug.print("LD [0x{X:04}], A\n", .{inst.dest}),
+            .LdhACMem => std.debug.print("LDH A, [C]\n", .{}),
+            .LdhAImm8Mem => |inst| std.debug.print("LDH A, [0x{X:02}]\n", .{inst.source}),
+            .LdAImm16Mem => |inst| std.debug.print("LD A, [0x{X:04}]\n", .{inst.source}),
+            .AddSPImm8 => |inst| std.debug.print("ADD SP, 0x{X:02}\n", .{inst.source}),
+            .LdHLSPPlusImm8 => |inst| std.debug.print("LD HL, SP + 0x{X:02}\n", .{inst.source}),
+            .LdSPHL => std.debug.print("LD SP, HL\n", .{}),
+            .Di => std.debug.print("DI\n", .{}),
+            .Ei => std.debug.print("EI\n", .{}),
+            .RlcR8 => |inst| std.debug.print("RLC {s} {s}\n", .{ @tagName(inst.dest), @tagName(inst.nibble) }),
+            .RrcR8 => |inst| std.debug.print("RRC {s} {s}\n", .{ @tagName(inst.dest), @tagName(inst.nibble) }),
+            .RlR8 => |inst| std.debug.print("RL {s} {s}\n", .{ @tagName(inst.dest), @tagName(inst.nibble) }),
+            .RrR8 => |inst| std.debug.print("RR {s} {s}\n", .{ @tagName(inst.dest), @tagName(inst.nibble) }),
+            .SlaR8 => |inst| std.debug.print("SLA {s} {s}\n", .{ @tagName(inst.dest), @tagName(inst.nibble) }),
+            .SraR8 => |inst| std.debug.print("SRA {s} {s}\n", .{ @tagName(inst.dest), @tagName(inst.nibble) }),
+            .SwapR8 => |inst| std.debug.print("SWAP {s} {s}\n", .{ @tagName(inst.dest), @tagName(inst.nibble) }),
+            .SrlR8 => |inst| std.debug.print("SRL {s} {s}\n", .{ @tagName(inst.dest), @tagName(inst.nibble) }),
+            .ResB3R8 => |inst| std.debug.print("RES 3, {s} {s}\n", .{ @tagName(inst.dest), @tagName(inst.nibble) }),
+            .BitB3R8 => |inst| std.debug.print("BIT 3, {s} {s}\n", .{ @tagName(inst.dest), @tagName(inst.nibble) }),
+            .SetB3R8 => |inst| std.debug.print("SET 3, {s} {s}\n", .{ @tagName(inst.dest), @tagName(inst.nibble) }),
+        }
     }
 };

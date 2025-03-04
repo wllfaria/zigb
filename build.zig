@@ -29,7 +29,9 @@ pub fn build(b: *std.Build) void {
     run_step.dependOn(&run_cmd.step);
 
     const unit_tests = b.addTest(.{
-        .root_module = exe_mod,
+        .root_source_file = b.path("src/unit_tests.zig"),
+        .target = target,
+        .optimize = optimize,
     });
 
     const run_unit_tests = b.addRunArtifact(unit_tests);
